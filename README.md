@@ -1,4 +1,7 @@
-# Antimicrobial Resistance
+# ideARG - 2020: Eco-evolutionary approach to identification and isolation of freshwater bacteria harbouring antibiotic resistance genes
+
+
+### Temporary description
 
 Mamba environment
 ```
