@@ -3,47 +3,47 @@ configfile: 'config.yaml'
 
 rule all:
     input:
-        expand("{wdir}/{sample}/fastp", sample=config["SAMPLES"], wdir=config["WDIR"]),
-        expand("{wdir}/{sample}/fastp/R1.fastq.gz", sample=config["SAMPLES"], wdir=config["WDIR"]),
-        expand("{wdir}/{sample}/fastp/R2.fastq.gz", sample=config["SAMPLES"], wdir=config["WDIR"]),
-        expand("{wdir}/{sample}/megahit", sample=config["SAMPLES"], wdir=config["WDIR"]),
+        # expand("{wdir}/{sample}/fastp", sample=config["SAMPLES"], wdir=config["WDIR"]),
+        # expand("{wdir}/{sample}/fastp/R1.fastq.gz", sample=config["SAMPLES"], wdir=config["WDIR"]),
+        # expand("{wdir}/{sample}/fastp/R2.fastq.gz", sample=config["SAMPLES"], wdir=config["WDIR"]),
+        # expand("{wdir}/{sample}/megahit", sample=config["SAMPLES"], wdir=config["WDIR"]),
         # expand("{wdir}/{sample}/metaquast", sample=config["SAMPLES"], wdir=config["WDIR"]),
         # expand("{wdir}/rgi_card_db", wdir=config["WDIR"]),
-        # expand("{wdir}/{sample}/rgi_main", wdir=config["WDIR"], sample=config["SAMPLES"]),
+        expand("{wdir}/{sample}/rgi_main", wdir=config["WDIR"], sample=config["SAMPLES"]),
         # expand("{wdir}/{sample}/amr_finderplus", wdir=config["WDIR"], sample=config["SAMPLES"])
 
 
-rule run_fastp:
-    input:
-        r1="{wdir}/{sample}/R1.fastq.gz",
-        r2="{wdir}/{sample}/R2.fastq.gz",
-    output:
-        dir=directory("{wdir}/{sample}/fastp"),
-        r1="{wdir}/{sample}/fastp/R1.fastq.gz", 
-        r2="{wdir}/{sample}/fastp/R2.fastq.gz"
-    threads: 3
-    shell:
-        """fastp -i {input.r1} -I {input.r2} -o {output.r1} -O {output.r2} \
-        --unpaired1 {output.dir}/unpaired_R1.fastq.gz \
-        --unpaired2 {output.dir}/unpaired_R2.fastq.gz \
-        --json {output.dir}/report.json \
-        --html {output.dir}/report.html \
-        --failed_out {output.dir}/failed.fastq.gz \
-        --thread {threads} -q 20 u 40"""
+# rule run_fastp:
+#     input:
+#         r1="{wdir}/{sample}/R1.fastq.gz",
+#         r2="{wdir}/{sample}/R2.fastq.gz",
+#     output:
+#         dir=directory("{wdir}/{sample}/fastp"),
+#         r1="{wdir}/{sample}/fastp/R1.fastq.gz", 
+#         r2="{wdir}/{sample}/fastp/R2.fastq.gz"
+#     threads: 3
+#     shell:
+#         """fastp -i {input.r1} -I {input.r2} -o {output.r1} -O {output.r2} \
+#         --unpaired1 {output.dir}/unpaired_R1.fastq.gz \
+#         --unpaired2 {output.dir}/unpaired_R2.fastq.gz \
+#         --json {output.dir}/report.json \
+#         --html {output.dir}/report.html \
+#         --failed_out {output.dir}/failed.fastq.gz \
+#         --thread {threads} -q 20 u 40"""
 
-rule run_megahit:
-    input:
-        r1="{wdir}/{sample}/fastp/R1.fastq.gz",
-        r2="{wdir}/{sample}/fastp/R2.fastq.gz",
-    output:
-        directory("{wdir}/{sample}/megahit")
-    threads: 30
-    benchmark: "{wdir}/benchmark/{sample}/megahit.txt"
-    params:
-        complex_metagenome="--presets meta-large"
-    run:
-        shell("megahit {params.complex_metagenome} -t {threads} --memory 0.8 -1 {input.r1} -2 {input.r2} -o {output}")
-        shell("mv {output}/final.contigs.fa {output}/contigs.fasta")
+# rule run_megahit:
+#     input:
+#         r1="{wdir}/{sample}/fastp/R1.fastq.gz",
+#         r2="{wdir}/{sample}/fastp/R2.fastq.gz",
+#     output:
+#         directory("{wdir}/{sample}/megahit")
+#     threads: 30
+#     benchmark: "{wdir}/benchmark/{sample}/megahit.txt"
+#     params:
+#         complex_metagenome="--presets meta-large"
+#     run:
+#         shell("megahit {params.complex_metagenome} -t {threads} --memory 0.8 -1 {input.r1} -2 {input.r2} -o {output}")
+#         shell("mv {output}/final.contigs.fa {output}/contigs.fasta")
 
 
 # rule run_metaquast:
@@ -96,27 +96,29 @@ rule run_megahit:
 #           )
 #         """
 
-# rule run_rgi_main:
-#     input:
-#         contig_path="{wdir}/{sample}/megahit",
-#         rgi_db="{wdir}/rgi_card_db"
-#     output:
-#         folder=directory("{wdir}/{sample}/rgi_main")
-#     params:
-#         aligner="kma"
-#     threads: 5
-#     log: "{wdir}/{sample}/rgi_main/log.out"
-#     run:
-#         shell("mkdir -p {output.folder}")
-#         shell("echo {input.rgi_db}")
-#         shell("touch {log}")
-#         shell("rgi main --input_sequence {input.contig_path}/contigs.fasta \
-#             --output_file {output.folder}/output \
-#             --input_type contig \
-#             --num_threads {threads} \
-#             --alignment_tool BLAST \
-#             --orf_finder PRODIGAL \
-#             --clean >> {log} 2>&1")
+rule run_rgi_main:
+    input:
+        contig_path="{wdir}/{sample}/megahit",
+    output:
+        folder=directory("{wdir}/{sample}/rgi_main")
+    threads: 34
+    log: "{wdir}/{sample}/rgi_main/log.out"
+    benchmark: "{wdir}/benchmark/rgi_main/{sample}_bench.txt"
+    params:
+        outfile="{wdir}/{sample}/rgi_main/{sample}"
+    run:
+        shell("mkdir -p {output.folder}")
+        shell("touch {log}")
+        shell("rgi main --input_sequence {input.contig_path}/contigs.fasta \
+            --output_file {params.outfile} \
+            --input_type contig \
+            --num_threads {threads} \
+            --alignment_tool DIAMOND \
+            --orf_finder PRODIGAL \
+            --low_quality \
+            --include_nudge \
+            --split_prodigal_jobs \
+            --clean >> {log} 2>&1")
 
 # rule amrfinderplus:
 #     input:
