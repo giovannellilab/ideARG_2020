@@ -4,3 +4,8 @@
 /.nextflow
 /.ipynb*
 /rgi_heatmap
+/assemblies
+/*rgi*
+/AMR*
+/from_kbase
+/megares*
