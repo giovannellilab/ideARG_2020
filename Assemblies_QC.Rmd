@@ -1,0 +1,214 @@
+---
+title: "R Notebook"
+---
+
+```{r}
+library(phyloseq)
+library(microbiome)
+library(tidyverse)
+library(ggplot2)
+library(viridis)
+library(pals)
+library(grid)
+library(svglite)
+```
+
+
+```{r}
+theme_glab <- function(base_size = 30,
+                    base_family = "",
+                    base_line_size = base_size / 180,
+                    base_rect_size = base_size / 180) {
+   
+    font <- "Helvetica" #assign font family up front
+   
+    theme_bw(base_size = base_size,
+                base_family = base_family,
+                base_line_size = base_line_size) %+replace%
+    theme(
+        legend.background =  element_blank(),
+        legend.title =       element_text(color = rgb(100, 100, 100, maxColorValue = 255),
+                                          size = rel(0.65),
+                                         hjust = 0),
+        legend.text =        element_text(color = rgb(100, 100, 100, maxColorValue = 255),
+                                          size = rel(0.65)),
+        legend.key.size =    unit(0.8, "lines"),
+     
+      plot.title = element_text(
+        color = rgb(100, 100, 100, maxColorValue = 255),
+        hjust = 0),
+       
+      axis.title = element_text(
+        color = rgb(100, 100, 100, maxColorValue = 255),
+        size = rel(0.65)),
+      
+      axis.text = element_text(
+        color = rgb(100, 100, 100, maxColorValue = 255),
+        size = rel(0.65)),
+       
+      plot.caption = element_text(
+        color = rgb(100, 100, 100, maxColorValue = 255),
+        size = rel(0.7),
+        hjust = 1),
+       
+      panel.grid.major = element_blank(),  
+      panel.grid.minor = element_blank(),  
+      panel.border = element_rect(fill = NA, colour = rgb(100, 100, 100, maxColorValue = 255)),
+
+     
+      complete = TRUE
+    )
+}
+```
+
+
+```{r}
+
+info_assemblies <- read.csv("./info_assemblies.csv", header = T)
+info_assemblies$Mbps <- round(info_assemblies$Mbps/1000000, digits=2)
+
+info_assemblies$largest_contig <- info_assemblies$largest_contig/1000
+
+info_assemblies$input_reads <- round(info_assemblies$input_reads/1000000, digits=2)
+info_assemblies$survival_reads_after_trimming <- round(info_assemblies$survival_reads_after_trimming/1000000, digits=2)
+
+info_assemblies
+
+
+purple <- "#440154FF"
+green <-  "#238A8DFF"
+yellow <- "#FDE725FF"
+
+```
+
+
+```{r}
+p1 <- ggplot( info_assemblies, aes( x = sample, y = N50 )) + 
+  geom_bar( stat = "identity", fill = "#1d3557" ) +
+  facet_grid(~factor(location, 
+                     levels=c('Suna Canottieri', 'Teatro Maggiore', 'Fondo Toce')),
+             scales = "free") + 
+  xlab("Samples") + 
+  ggtitle("N50") +
+  geom_text(aes( label = paste0( N50,"" ), y = N50 ),
+             vjust = -0.5, size = 4, color = "black" )+
+  theme_glab() +
+  theme(plot.background = element_blank(),
+        legend.background = element_blank(),
+        legend.title = element_text(color = rgb(100, 100, 100, maxColorValue = 255),
+                                    size = rel(0.65),
+                                    hjust = 0),
+        axis.text.x = element_text(color="black", size=12),
+  ) 
+
+ggsave(plot=p1, paste0("N50", ".jpg"),width=13,height=10)
+
+```
+
+
+```{r}
+p2 <- ggplot( info_assemblies, aes( x = sample, y = L50 )) + 
+  geom_bar( stat = "identity", fill = "#1d3557" ) +
+  facet_grid(~factor(location, 
+                     levels=c('Suna Canottieri', 'Teatro Maggiore', 'Fondo Toce')),
+             scales = "free") + 
+  xlab("Samples") + 
+  ggtitle("L50") +
+  geom_text(aes( label = paste0( L50,"" ), y = L50 ),
+             vjust = -0.5, size = 4, color = "black" )+
+  theme_glab() +
+  theme(plot.background = element_blank(),
+        legend.background = element_blank(),
+        legend.title = element_text(color = rgb(100, 100, 100, maxColorValue = 255),
+                                    size = rel(0.65),
+                                    hjust = 0),
+        axis.text.x = element_text(color="black", size=12),
+  ) 
+
+ggsave(plot=p2, paste0("L50", ".jpg"),width=13,height=10)
+```
+
+
+```{r}
+p3 <- ggplot( info_assemblies, aes( x = sample, y = largest_contig )) + 
+  geom_bar( stat = "identity", fill = "#1d3557" ) +
+  facet_grid(~factor(location, 
+                     levels=c('Suna Canottieri', 'Teatro Maggiore', 'Fondo Toce')),
+             scales = "free") + 
+  xlab("Samples") + 
+  ylab("Largest Contig (Kbps)") + 
+  ggtitle("Length of the longest contig") +
+  geom_text(aes( label = paste0( largest_contig,"" ), y = largest_contig ),
+             vjust = -0.5, size = 4, color = "black" )+
+  theme_glab() +
+  theme(plot.background = element_blank(),
+        legend.background = element_blank(),
+        legend.title = element_text(color = rgb(100, 100, 100, maxColorValue = 255),
+                                    size = rel(0.65),
+                                    hjust = 0),
+        axis.text.x = element_text(color="black", size=12),
+  ) 
+
+ggsave(plot=p3, paste0("Largest_Contig", ".jpg"),width=13,height=10)
+```
+
+
+```{r}
+p4 <- ggplot( info_assemblies, aes( x = sample, y = Mbps )) + 
+  geom_bar( stat = "identity", fill = "#1d3557" ) +
+  facet_grid(~factor(location, 
+                     levels=c('Suna Canottieri', 'Teatro Maggiore', 'Fondo Toce')),
+             scales = "free") + 
+  xlab("Samples") + 
+  ylab("Total length (Mbps)") + 
+  ggtitle("Total number of bases in the assemblies") +
+  geom_text(aes( label = paste0( Mbps,"" ), y = Mbps ),
+             vjust = -0.5, size = 4, color = "black" )+
+  theme_glab() +
+  theme(plot.background = element_blank(),
+        legend.background = element_blank(),
+        legend.title = element_text(color = rgb(100, 100, 100, maxColorValue = 255),
+                                    size = rel(0.65),
+                                    hjust = 0),
+        axis.text.x = element_text(color="black", size=12),
+  ) 
+
+ggsave(plot=p4, paste0("Mbps", ".jpg"),width=13,height=10)
+```
+
+
+
+```{r}
+library(reshape2)
+dfm <- melt(info_assemblies[,c('sample', 'input_reads','survival_reads_after_trimming')],id.vars = 1)
+dfm
+
+locs <- info_assemblies[, c("sample", "location")]
+
+m <- merge(x = dfm, y = locs, by = "sample", all.x = TRUE)
+m
+
+p5 <- ggplot(m, aes(x = sample, y = value)) + 
+  geom_bar(aes(fill = variable),stat = "identity",position = "dodge")+
+  facet_grid(~factor(location, 
+                     levels=c('Suna Canottieri', 'Teatro Maggiore', 'Fondo Toce')),
+             scales = "free") +
+  xlab("Samples") + 
+  ylab("Million reads") + 
+  ggtitle("Sequencing quality") +
+  # geom_text(aes( label = paste0( value,"" ), y = value ),
+  #            vjust = -0.5, size = 4, color = "black" )+
+  theme_glab() +
+  theme(plot.background = element_blank(),
+        legend.position = "bottom",
+        legend.direction = "vertical",
+        legend.background = element_blank(),
+        legend.title = element_text(color = rgb(100, 100, 100, maxColorValue = 255),
+                                    size = rel(0.65),
+                                    hjust = 0),
+        axis.text.x = element_text(color="black", size=12),
+  ) 
+
+ggsave(plot=p5, paste0("Sequencing_quality", ".jpg"),width=13,height=10)
+
+```
