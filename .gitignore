@@ -10,3 +10,7 @@
 /from_kbase
 /megares*
 /resfinder_db
+/.RData
+/.Rhistory
+/hmms_*
+.DS_Store
