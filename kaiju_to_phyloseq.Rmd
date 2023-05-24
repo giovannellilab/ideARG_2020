@@ -1,0 +1,263 @@
+---
+title: "R Notebook"
+---
+
+```{r}
+library(phyloseq)
+library(microbiome)
+library(tidyverse)
+library(ggplot2)
+library(viridis)
+library(pals)
+library(grid)
+library(svglite)
+```
+
+
+```{r}
+theme_glab <- function(base_size = 30,
+                    base_family = "",
+                    base_line_size = base_size / 180,
+                    base_rect_size = base_size / 180) {
+   
+    font <- "Helvetica" #assign font family up front
+   
+    theme_bw(base_size = base_size,
+                base_family = base_family,
+                base_line_size = base_line_size) %+replace%
+    theme(
+        legend.background =  element_blank(),
+        legend.title =       element_text(color = rgb(100, 100, 100, maxColorValue = 255),
+                                          size = rel(0.65),
+                                         hjust = 0),
+        legend.text =        element_text(color = rgb(100, 100, 100, maxColorValue = 255),
+                                          size = rel(0.65)),
+        legend.key.size =    unit(0.8, "lines"),
+     
+      plot.title = element_text(
+        color = rgb(100, 100, 100, maxColorValue = 255),
+        hjust = 0),
+       
+      axis.title = element_text(
+        color = rgb(100, 100, 100, maxColorValue = 255),
+        size = rel(0.65)),
+      axis.text = element_text(
+        color = rgb(100, 100, 100, maxColorValue = 255),
+        size = rel(0.65)),
+       
+      plot.caption = element_text(
+        color = rgb(100, 100, 100, maxColorValue = 255),
+        size = rel(0.7),
+        hjust = 1),
+       
+      panel.grid.major = element_blank(),  
+      panel.grid.minor = element_blank(),  
+      panel.border = element_rect(fill = NA, colour = rgb(100, 100, 100, maxColorValue = 255)),
+
+     
+      complete = TRUE
+    )
+}
+```
+
+
+
+```{r}
+
+kaiju_bar_plot <- function(folder, category, order_sample, title, plot=FALSE){
+  path <- paste0(folder, "/", category, "/", category, "2/")
+  filenames <- list.files(path, pattern=".csv")
+
+  category_db <- read.csv(paste0(path, category, "_db.csv"), header=T, sep="\t")
+
+  to_join <- list(category_db)
+
+for (i in filenames) {
+    if (i == paste0(category, "_db.csv")) {
+      next
+    }
+
+    i <- paste0(path, i)
+    local_df <- read.table(i,header=T, sep="\t")
+    to_join <- append(to_join, list(local_df))
+}
+
+  Filter(function(x) is.data.frame(get(x)), ls())
+
+
+  df_category <- to_join %>%
+    reduce(left_join, by="taxon_name")
+  
+  print(df_category)
+  df_category <- df_category[, c("taxon_name", order)]
+
+  colnames(df_category)[1] <- category
+  
+  #making the otu_table
+  phyla_otu_table<-df_category
+  row.names(phyla_otu_table)<-phyla_otu_table[,1] #name the rows with the first column with the taxa name
+  phyla_otu_table<-phyla_otu_table[,-1] #delete the first column with the taxa name
+  phyla_otu_table<-(as.matrix(t(phyla_otu_table)))
+  phyla_otu_table<-otu_table(phyla_otu_table, taxa_are_rows = FALSE)
+  # class(phyla_otu_table) #sanity check
+  # phyla_otu_table #sanity check
+
+  phyla_otu_table <- t(phyla_otu_table)
+
+  ## making the sample_data from the name of the samples
+  sample_dataset<-data.frame(colnames(df_category))
+  sample_dataset<-data.frame(sample_dataset[-1,])
+  colnames(sample_dataset)[1]<-"site"
+  rownames(sample_dataset)<-sample_dataset[,1]
+  sample_dataset<-sample_data(sample_dataset)
+  sample_dataset$location <- 
+    c("Suna Canottieri",
+    "Suna Canottieri",
+    "Suna Canottieri",
+    "Suna Canottieri",
+    "Suna Canottieri",
+    "Suna Canottieri",
+    "Teatro Maggiore",
+    "Teatro Maggiore",
+    "Teatro Maggiore",
+    "Teatro Maggiore",
+    "Teatro Maggiore",
+    "Teatro Maggiore",
+    "Fondo Toce",
+    "Fondo Toce",
+    "Fondo Toce",
+    "Fondo Toce",
+    "Fondo Toce",
+    "Fondo Toce")
+    
+  sample_dataset$level <- 
+    c("coast",
+    "coast",
+    "coast",
+    "deep",
+    "deep",
+    "deep",
+    "coast",
+    "coast",
+    "coast",
+    "deep",
+    "deep",
+    "deep",
+    "coast",
+    "coast",
+    "coast",
+    "deep",
+    "deep",
+    "deep")
+  # class(sample_dataset)
+  # sample_dataset #sanity_check
+
+  taxa<-as.matrix(rownames(phyla_otu_table))
+  colnames(taxa)[1] <- category
+  rownames(taxa)<-taxa[,1]
+  taxa_table<-tax_table(taxa)
+  # class(taxa_table)
+  # taxa_table
+
+  phyla_otu_table[is.na(phyla_otu_table)] <- 0
+  phyloseq_obj<-phyloseq(sample_dataset,taxa_table,phyla_otu_table)
+  
+  prok_ra = transform_sample_counts(phyloseq_obj, function(x){x / sum(x)})
+  
+  if (plot) {
+    plot <- plot_bar(prok_ra, fill=category, x="site", title=title) +
+    theme_glab() + 
+    facet_grid(~factor(location, levels=c('Suna Canottieri', 'Teatro Maggiore', 'Fondo Toce')), scales = "free") +
+    xlab("") + 
+    ylab("Relative Abundance (%)") + 
+    theme(legend.position = "bottom", 
+          legend.direction = "vertical",
+          legend.text = element_text(color = "black", size = 13) ) +
+    theme(axis.text.x = element_text(angle = 90, vjust = 0.25, hjust=1),
+          axis.text=element_text(size=14,face="bold")) 
+
+  ggsave(plot=plot, paste0(title, ".jpg"),width=16,height=12)
+  }
+  
+  return(phyloseq_obj)
+}
+
+order <- c("cc4_1", "cc4_2", "cc4_3",
+           "cd4_1", "cd4_2", "cd4_3",
+           "mc4_1", "mc4_2", "mc4_3",
+           "md4_1", "md4_2", "md4_3",
+           "fc4_1", "fc4_2", "fc4_3",
+           "fd4_1", "fd4_2", "fd4_3")
+
+folder <- "./from_kbase/kaiju_analysis/"
+# category <- "phylum"
+# title <- "ideARG_Phylum"
+
+# p <- kaiju_bar_plot(folder, category, order, title, plot=TRUE)
+# 
+# p <- kaiju_bar_plot(folder, "class", order, "ideARG_Class", plot=TRUE)
+# 
+# p <- kaiju_bar_plot(folder, "family", order, "ideARG_Family", plot=TRUE)
+# 
+# p <- kaiju_bar_plot(folder, "genus", order, "ideARG_Genus", plot=TRUE)
+# 
+# p <- kaiju_bar_plot(folder, "order", order, "ideARG_Order", plot=TRUE)
+# 
+# p <- kaiju_bar_plot(folder, "species", order, "ideARG_Species", plot=TRUE)
+
+# 
+# phyloseq_obj <- kaiju_bar_plot(folder, "phylum", order, "ideARG_Phylum", plot=TRUE)
+phyloseq_obj <- kaiju_bar_plot(folder, "order", order, "ideARG_Order", plot=FALSE)
+
+
+
+```
+
+```{r}
+# BETA DIVERSITY
+
+prok_dist_wjac <- phyloseq::distance(phyloseq_obj, method = "jaccard")
+prok_dist_unjac <- phyloseq::distance(phyloseq_obj, method = "jaccard", binary = TRUE)
+
+# https://rdrr.io/bioc/phyloseq/man/distance.html
+prok_nmds_jw <- ordinate(phyloseq_obj, prok_dist_wjac, method = "NMDS",trymax=100)
+
+```
+
+```{r}
+# https://rdrr.io/bioc/phyloseq/man/distance.html
+prok_nmds_juw <- ordinate(phyloseq_obj, prok_dist_unjac, method = "NMDS",trymax=100)
+
+```
+
+```{r}
+# nmds W jaccard
+W_jacc <- plot_ordination(phyloseq_obj, prok_nmds_jw, type="samples", title="nMDS weighted Jaccard similarity (ORDER)") +
+  #geom_text(aes(label= sample), size=4, hjust=0.2,vjust=2) +
+  geom_point(aes(fill=location,shape=level),size=6,color="black",stroke=0.3) + 
+  geom_text(aes(label= site), size=4, hjust=0.2,vjust=2) +
+  scale_fill_viridis(discrete=T) + 
+  scale_shape_manual(values=c(21:23)) +
+  theme_glab() + 
+  theme(legend.position = "right") +
+  guides(fill = guide_legend(override.aes = list(shape = 21) ),
+            shape = guide_legend(override.aes = list(fill = "black")))
+
+ggsave(plot=W_jacc, paste0("nMDS_w_jaccard_ORDER", ".jpg"),width=16,height=12)
+
+```
+
+```{r}
+# NMDS Jaccard UNWeighted
+Uw_jacc <- plot_ordination(phyloseq_obj, prok_nmds_juw, type="samples",title="nMDS unweighted Jaccard similarity (ORDER)") +
+  geom_text(aes(label= site), size=4, hjust=0.2,vjust=2) +
+  geom_point(aes(fill=location, shape=level), size=6,color="black",stroke=0.3) + 
+  scale_fill_viridis(discrete=T) + 
+  scale_shape_manual(values=c(21:23)) +
+  theme_glab() + 
+  theme(legend.position = "right") +
+  guides(fill = guide_legend(override.aes = list(shape = 21) ),
+            shape = guide_legend(override.aes = list(fill = "black")))
+
+ggsave(plot=Uw_jacc, paste0("nMDS_UnW_jaccard_ORDER", ".jpg"),width=16,height=12)
+```
