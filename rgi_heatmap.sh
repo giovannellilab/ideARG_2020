@@ -4,8 +4,9 @@
 
 rgi heatmap \
     --input rgi_heatmap \
-    --cluster genes \
-    --output rgi_heatmap/RGI_heatmap
+    --output rgi_heatmap/RGI_heatmap_gene_family \
+    --category gene_family 
+    
 
 
 

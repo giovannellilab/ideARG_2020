@@ -6,9 +6,8 @@ from subprocess import check_call
 
 
 def main():
-    folder = "from_kbase/assemblies"
-    out_folder = "results"
-    
+    folder = "from_kbase/assemblies/metaspades"
+    out_folder = "results_metaspades"    
 
     with open("config.yaml") as file:
         config = yaml.load(file, Loader=yaml.FullLoader)
@@ -16,9 +15,9 @@ def main():
     samples = config["SAMPLES"]
 
     for s in samples:
-        megahit = f"{out_folder}/{s}/megahit"
-        check_call(f"mkdir -p {megahit}", shell=True)
-        check_call(f"cp {folder}/{s}.megahit.assembly.FASTA/{s}.megahit.assembly.fa {megahit}/contigs.fasta", shell=True)
+        metaspades = f"{out_folder}/{s}/metaspades"
+        check_call(f"mkdir -p {metaspades}", shell=True)
+        check_call(f"cp {folder}/{s}.metaspades.assembly.fa {metaspades}/contigs.fasta", shell=True)
 
 
 if __name__ == "__main__":
