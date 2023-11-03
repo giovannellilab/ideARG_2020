@@ -17,5 +17,5 @@ SAMPLES:
 - md4_1
 - md4_2
 - md4_3
-WDIR: results
+WDIR: results_megahit
 hmm_folder: /Users/davide/stark/unina_prj/ideARG_2020/hmms_folder

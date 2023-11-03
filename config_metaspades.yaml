@@ -1,0 +1,22 @@
+SAMPLES:
+- cc4_1
+- cc4_2
+- cc4_3
+- cd4_1
+- cd4_2
+- cd4_3
+- fc4_1
+- fc4_2
+- fc4_3
+- fd4_1
+- fd4_2
+- fd4_3
+- mc4_1
+- mc4_2
+- mc4_3
+- md4_1
+- md4_2
+- md4_3
+WDIR: /mnt/data/bigdata/ideARG_2020/results_metaspades
+hmm_folder: /mnt/data/bigdata/ideARG_2020/hmms_folder
+hmm_folder_AMRFinderPlus: /mnt/data/bigdata/ideARG_2020/HMMS_AMRFinderPlus/HMM
