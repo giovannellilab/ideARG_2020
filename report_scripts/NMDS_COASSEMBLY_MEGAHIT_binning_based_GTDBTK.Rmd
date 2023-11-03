@@ -1,0 +1,360 @@
+---
+title: "R Notebook"
+---
+
+```{r}
+library(vegan)
+library(ggplot2)
+library(phyloseq)
+
+set.seed(42)
+```
+
+```{r}
+theme_glab <- function(base_size = 30,
+                    base_family = "",
+                    base_line_size = base_size / 180,
+                    base_rect_size = base_size / 180) {
+   
+    font <- "Helvetica" #assign font family up front
+   
+    theme_bw(base_size = base_size,
+                base_family = base_family,
+                base_line_size = base_line_size) %+replace%
+    theme(
+        legend.background =  element_blank(),
+        legend.title =       element_text(color = rgb(100, 100, 100, maxColorValue = 255),
+                                          size = rel(0.65),
+                                         hjust = 0),
+        legend.text =        element_text(color = rgb(100, 100, 100, maxColorValue = 255),
+                                          size = rel(0.65)),
+        legend.key.size =    unit(0.8, "lines"),
+     
+      plot.title = element_text(
+        color = rgb(100, 100, 100, maxColorValue = 255),
+        hjust = 0),
+       
+      axis.title = element_text(
+        color = rgb(100, 100, 100, maxColorValue = 255),
+        size = rel(0.65)),
+      axis.text = element_text(
+        color = rgb(100, 100, 100, maxColorValue = 255),
+        size = rel(0.65)),
+       
+      plot.caption = element_text(
+        color = rgb(100, 100, 100, maxColorValue = 255),
+        size = rel(0.7),
+        hjust = 1),
+       
+      panel.grid.major = element_blank(),  
+      panel.grid.minor = element_blank(),  
+      panel.border = element_rect(fill = NA, colour = rgb(100, 100, 100, maxColorValue = 255)),
+
+     
+      complete = TRUE
+    )
+}
+```
+
+
+
+```{r}
+phylum_df <- read.csv("./COASSEMBLY_MEGAHIT_binning_based_gtdbtk/phylum.tsv", sep="\t", row.names = 1)
+class_df <- read.csv("./COASSEMBLY_MEGAHIT_binning_based_gtdbtk/class.tsv", sep="\t", row.names = 1)
+order_df <- read.csv("./COASSEMBLY_MEGAHIT_binning_based_gtdbtk/order.tsv", sep="\t", row.names = 1)
+family_df <- read.csv("./COASSEMBLY_MEGAHIT_binning_based_gtdbtk/family.tsv", sep="\t", row.names = 1)
+genus_df <- read.csv("./COASSEMBLY_MEGAHIT_binning_based_gtdbtk/genus.tsv", sep="\t", row.names = 1)
+species_df <- read.csv("./COASSEMBLY_MEGAHIT_binning_based_gtdbtk/species.tsv", sep="\t", row.names = 1)
+
+```
+
+
+```{r}
+info <- c("sample", "sample_ids", "macro_sample", "macro_sample_ids", "macro_sample_location", "coast_deep_shapes")
+```
+
+```{r}
+phylum_features <- c("Acidobacteriota", "Actinomycetota", "Armatimonadota", "Bacteroidota", "Bdellovibrionota", "Chloroflexota", "Cyanobacteriota", "Deinococcota", "Desulfobacterota", "Desulfobacterota_F", "Desulfobacterota_G", "Gemmatimonadota", "Methanobacteriota", "Methylomirabilota", "Myxococcota", "Myxococcota_A", "Nitrospirota", "Patescibacteria", "Planctomycetota", "Pseudomonadota", "Thermoplasmatota", "Thermoproteota", "Verrucomicrobiota", "Zixibacteria")
+
+class_features <- c("Abditibacteria", "Acidimicrobiia", "Actinomycetia", "Alphaproteobacteria", "Aminicenantia", "Anaerolineae", "Armatimonadia", "Bacteroidia", "Bdellovibrionia", "Blastocatellia", "Cyanobacteriia", "DSM.4660", "DSWW01", "Deinococci", "Desulfobaccia", "Desulfomonilia", "Fimbriimonadia", "Gammaproteobacteria", "Gemmatimonadetes", "Ignavibacteria", "JAEDAM01", "Kapabacteria", "Limnocylindria", "MSB.5A5", "Methanobacteria", "Methylomirabilia", "Myxococcia", "Nitrososphaeria", "Nitrospiria", "Paceibacteria", "Planctomycetia", "Polyangia", "RBG.13.43.22", "Rhodothermia", "SM23.61", "Syntrophia", "Syntrophobacteria", "Syntrophorhabdia", "Terriglobia", "Thermodesulfovibrionia", "Thermoleophilia", "Thermoplasmata", "UBA10030", "UBA1135", "UBA2361", "UBA727", "UBA796", "UBA9160", "Verrucomicrobiae", "Vicinamibacteria", "WYAZ01")
+
+order_features <- c("AKYH767.A", "Abditibacteriales", "Absconditabacterales", "Acidimicrobiales", "Actinomycetales", "Anaerolineales", "Armatimonadales", "BD1.5", "Bacteroidales", "Bdellovibrionales", "Beggiatoales", "Bryobacterales", "Burkholderiales", "CACIAM.22H2", "Caulobacterales", "Chitinophagales", "Chromatiales", "Chthoniobacterales", "Cyanobacteriales", "Cytophagales", "DSWW01", "Deinococcales", "Desulfatiglandales", "Desulfobaccales", "Desulfomonilales", "Dongiales", "Fen.336", "Fimbriimonadales", "Flavobacteriales", "GN15", "Gaiellales", "Gemmatales", "Gemmatimonadales", "Ignavibacteriales", "J036", "J057", "JAHEKZ01", "Kapabacteriales", "Limnocylindrales", "Methanobacteriales", "Methylococcales", "Methylomirabilales", "Micropepsales", "Miltoncostaeales", "Myxococcales", "NS11.12g", "Nitrososphaerales", "Nitrospirales", "Pedosphaerales", "Pirellulales", "Planctomycetales", "Polyangiales", "Propionibacteriales", "Pseudanabaenales", "Pseudomonadales", "Pyrinomonadales", "QHBO01", "RBC074", "RBG.13.43.22", "RBG.16.68.12", "Rhizobiales", "Rhodobacterales", "Rhodothermales", "SM23.61", "SZUA.149", "Solirubrobacterales", "Sphingomonadales", "Steroidobacterales", "Syntrophales", "Syntrophobacterales", "Syntrophorhabdales", "Thermodesulfovibrionales", "UBA10030", "UBA10834", "UBA1135", "UBA2199", "UBA2361", "UBA727", "UBA796", "UBA9160", "UBA9983_A", "Verrucomicrobiales", "Vicinamibacterales", "WYAZ01", "unclassified_")
+
+family_features <- c("X0.14.0.80.60.11", "X2013.40CM.41.45", "Abditibacteriaceae", "Absconditicoccaceae", "Aestuariivirgaceae", "Akkermansiaceae", "Anaeromyxobacteraceae", "Armatimonadaceae", "BA12", "Bdellovibrionaceae", "Beggiatoaceae", "Bryobacteraceae", "Burkholderiaceae_A", "Burkholderiaceae_B", "CACIAM.22H2", "CSP1.4", "CSP1.5", "Chitinophagaceae", "Chromatiaceae", "Chthoniobacteraceae", "Cyclobacteriaceae", "DSWW01", "Deinococcaceae", "Desulfomonilaceae", "Dongiaceae", "EnvOPS12", "FEB.12", "Fen.336", "Fimbriimonadaceae", "Flavobacteriaceae", "GCA.002686595", "GWC2.71.9", "Ga0077539", "Gaiellaceae", "Gemmataceae", "Gemmatimonadaceae", "HGW.15", "HTCC2089", "Hyphomonadaceae", "Ignavibacteriaceae", "Ilumatobacteraceae", "J036", "J057", "JAABRE01", "JAAYZI01", "JACDCH01", "JACQAP01", "JADIYW01", "JADJPG01", "JAHEKZ01", "JAHFRG01", "Kineosporiaceae", "LD1", "Methanobacteriaceae", "Methylomonadaceae", "Methylophilaceae", "Micropepsaceae", "Microtrichaceae", "Miltoncostaeaceae", "Myxococcaceae", "NICIL.2", "Nitrosopumilaceae", "Nitrospiraceae", "Nocardioidaceae", "OLB10", "PHOS.HE28", "Pirellulaceae", "Planctomycetaceae", "Pseudanabaenaceae", "Pyrinomonadaceae", "QHBO01", "RBC074", "RBG.13.43.22", "RBG.16.68.12", "Rhizobiaceae", "Rhodobacteraceae", "Rhodocyclaceae", "SHWZ01", "SM23.61", "SXON01", "SZUA.149", "Sandaracinaceae", "Saprospiraceae", "Solirubrobacteraceae", "Sphingomonadaceae", "Spirosomaceae", "Steroidobacteraceae", "Syntrophorhabdaceae", "Thermaceae", "UA16", "UBA10834", "UBA2023", "UBA2199", "UBA2999", "UBA4427", "UBA4778", "UBA6663", "UBA6898", "UBA6899", "UBA6906", "UBA6930", "Usitatibacteraceae", "V1.33", "VGSZ01", "VadinHA17", "Verrucomicrobiaceae", "WLNW01", "WYAZ01", "unclassified_")
+
+genus_features <- c("Aestuariivirga", "Albidovulum", "Aquisediminimonas", "Archangium_A", "Armatimonas", "BA12", "BJ22", "Bog.950", "CADEED01", "CADEFD01", "CAIOSQ01", "CAISIP01", "CAISKJ01", "CAIVPM01", "CAJQPP01", "CSP1.1", "CSP1.5", "Deinococcus", "EA.19", "ELB16.189", "F1.60.MAGs163", "Fen.999", "Ferruginibacter", "Flavisolibacter", "Flavobacterium", "G020354665", "Ga0074139", "Ga0077560", "Gaiella", "Gemmata", "Hydrogenophaga", "IGN3", "Ilumatobacter", "JAABRE01", "JAAFHL01", "JACDBZ01", "JACDDX01", "JACPYM01", "JACQAP01", "JADJOM01", "JADJOR01", "JADJPG01", "JADJSS01", "JADKBO01", "JAENVT01", "JAEUIA01", "JAEUMG01", "JAEUMZ01", "JAEURQ01", "JAFDVJ01", "JAFGDM01", "JAGNEJ01", "JAGOMW01", "JAGOPC01", "JAHFRG01", "JAIBCC01", "JAJTFW01", "JALHNI01", "JJ008", "LD21", "Lacibacter", "Leadbetterella", "Luteolibacter", "Meiothermus", "Methyloglobulus", "Methylophosphatis", "Methylotenera", "Methylotenera_A", "Miltoncostaea", "Nitrosarchaeum", "Nitrosotenuis", "Nitrospira_F", "Nocardioides", "Novosphingobium", "OLB11", "OLB14", "OLB17", "PCC.6802", "PHOS.HE28", "PNKF01", "Parasegetibacter", "Prosthecobacter", "Pseudobdellovibrio", "R.H.3", "RBG.16.68.12", "Rubellimicrobium", "S015.6", "SCN.70.22", "SPCO01", "SR.FBR.E99", "SXWH01", "SXXK01", "SXYR01", "SYFY01", "SZUA.430", "Sediminibacterium", "Segetibacter", "Sphingomicrobium", "Sphingopyxis", "Sphingorhabdus_B", "Syntrophorhabdus", "Thioploca", "UBA11986", "UBA12294", "UBA2192", "UBA2199", "UBA3362", "UBA349", "UBA3961", "UBA4660", "UBA6168", "UBA6663", "UBA6898", "UBA7672", "UKL13.2", "V1.33", "VFJN01", "VGRF01", "VGSQ01", "WLNW01", "ZC4RG19", "ZC4RG30", "unclassified_")
+
+species_features <- c("CSP1.5.sp001443495", "Nitrospira_F.sp001464735", "Nitrospira_F.sp002083565", "Sphingorhabdus_B.lacus", "UBA3362.sp013140975", "unclassified_")
+
+```
+
+
+
+
+```{r}
+plot_NMDS <- function(otu_dataframe, taxa_level, distance_metrics="jaccard"){
+  features_dict <- list(
+    "phylum"=phylum_features, 
+    "class"=class_features,
+    "order"=order_features,
+    "family"=family_features,
+    "genus"=genus_features,
+    "species"=species_features
+  )
+  
+  local_features <- features_dict[[taxa_level]]
+  print(local_features)
+  
+  otu <- otu_dataframe[, local_features]
+  env <- otu_dataframe[, info]
+
+  motu <- as.matrix(otu)
+  
+  nmds = metaMDS(motu, distance = distance_metrics, k=2, trymax = 1000)
+  
+  nmds_coordinates <- as.data.frame(scores(nmds)$sites)
+  nmds_coordinates$samples <- env$macro_sample_location
+  nmds_coordinates$coast_deep_shapes <- env$coast_deep_shapes
+  
+  gg = ggplot(data = nmds_coordinates, aes(x = NMDS1, y = NMDS2)) + 
+    geom_point(data = nmds_coordinates, aes(colour = samples, shape = coast_deep_shapes), size = 3, alpha = 0.5) + 
+    scale_colour_manual(values = c("darkred", "steelblue", "darkgreen")) + 
+    theme(axis.title = element_text(size = 10, face = "bold", colour = "grey30"), 
+           panel.background = element_blank(), panel.border = element_rect(fill = NA, colour = "grey30"), 
+           axis.ticks = element_blank(), axis.text = element_blank(), legend.key = element_blank(), 
+           legend.title = element_text(size = 10, face = "bold", colour = "grey30"), 
+           legend.text = element_text(size = 9, colour = "grey30")) +
+    labs(colour = "Location") +
+    ggtitle(paste0("NMDS ", taxa_level, " Stress: ", nmds$stress))
+     
+  gg
+}
+
+
+```
+
+
+```{r}
+# phylum
+
+plot_NMDS(phylum_df, taxa_level = "phylum", distance_metrics = "bray")
+
+```
+
+
+```{r}
+# class
+
+plot_NMDS(class_df, taxa_level = "class", distance_metrics = "bray")
+```
+
+
+```{r}
+# order
+
+plot_NMDS(order_df, taxa_level = "order", distance_metrics = "bray")
+```
+
+
+```{r}
+# family
+
+plot_NMDS(family_df, taxa_level = "family", distance_metrics = "bray")
+```
+
+
+```{r}
+# genus
+
+plot_NMDS(genus_df, taxa_level = "genus", distance_metrics = "bray")
+```
+
+
+```{r}
+
+gtdbtk2phyloseq <- function(otu_dataframe, taxa_level){
+  features_dict <- list(
+    "phylum"=phylum_features, 
+    "class"=class_features,
+    "order"=order_features,
+    "family"=family_features,
+    "genus"=genus_features,
+    "species"=species_features
+  )
+  
+  local_features <- features_dict[[taxa_level]]
+  
+  local_otu <- otu_table(as.matrix(otu_dataframe[, local_features]), taxa_are_rows = F)
+  local_env <- sample_data(otu_dataframe[, info])
+  
+  taxa<-as.matrix(colnames(local_otu))
+  colnames(taxa)[1] <- taxa_level
+  rownames(taxa)<-taxa[,1]
+  local_tax <- tax_table(taxa)
+  
+  phy_obj <- phyloseq(local_otu, local_env, local_tax)
+  return(phy_obj)
+}
+
+
+
+```
+
+
+
+```{r}
+
+phylum_phy <- gtdbtk2phyloseq(phylum_df, taxa_level = "phylum")
+phylum_norm <- transform_sample_counts(phylum_phy, function(x){x / sum(x)})
+
+```
+
+
+```{r}
+
+plot_abundances <- function(norm_df, taxa_level, title){
+  p <- plot_bar(norm_df, fill=taxa_level ) +
+    theme_glab() + 
+    facet_grid(~factor(macro_sample_location), scales = "free") +
+    xlab("") + 
+    ylab("Relative Abundance (%)") +
+    theme(legend.position = "bottom",
+          legend.text = element_text(color = "black", size = 18) ) +
+    ggtitle(title)
+  
+ 
+  return(p) 
+}
+
+
+
+```
+
+
+```{r  fig.width=20, fig.height=15}
+plot_abundances(phylum_norm, taxa_level = "phylum", title = "Phylum Abundances")
+
+top_10_phylum <- sort(taxa_sums(phylum_norm), TRUE)[1:10]
+phylum_10 <- prune_taxa(names(top_10_phylum), phylum_norm)
+
+
+plot_abundances(phylum_10, taxa_level = "phylum", title = "Phylum Abundances - Top 10")
+
+```
+
+
+```{r  fig.width=20, fig.height=15}
+
+class_phy <- gtdbtk2phyloseq(class_df, taxa_level = "class")
+class_norm <- transform_sample_counts(class_phy, function(x){x / sum(x)})
+
+plot_abundances(class_norm, taxa_level = "class", title = "Class Abundances")
+
+top_10_class <- sort(taxa_sums(class_norm), TRUE)[1:10]
+class_10 <- prune_taxa(names(top_10_class), class_norm)
+
+plot_abundances(class_10, taxa_level = "class", title = "Class Abundances - Top 10")
+
+```
+
+
+```{r fig.width=20, fig.height=15}
+
+order_phy <- gtdbtk2phyloseq(order_df, taxa_level = "order")
+order_norm <- transform_sample_counts(order_phy, function(x){x / sum(x)})
+
+plot_abundances(order_norm, taxa_level = "order", title = "Order Abundances")
+
+top_10_order <- sort(taxa_sums(order_norm), TRUE)[1:10]
+order_10 <- prune_taxa(names(top_10_order), order_norm)
+
+plot_abundances(order_10, taxa_level = "order", title = "Order Abundances - Top 10")
+
+```
+
+
+```{r fig.width=20, fig.height=15}
+
+family_phy <- gtdbtk2phyloseq(family_df, taxa_level = "family")
+family_norm <- transform_sample_counts(family_phy, function(x){x / sum(x)})
+
+plot_abundances(family_norm, taxa_level = "family", title = "Family Abundances")
+
+top_10_family <- sort(taxa_sums(family_norm), TRUE)[1:10]
+family_10 <- prune_taxa(names(top_10_family), family_norm)
+
+plot_abundances(family_10, taxa_level = "family", title = "Family Abundances - Top 10")
+```
+
+
+
+```{r fig.width=20, fig.height=15}
+
+genus_phy <- gtdbtk2phyloseq(genus_df, taxa_level = "genus")
+genus_norm <- transform_sample_counts(genus_phy, function(x){x / sum(x)})
+
+plot_abundances(genus_norm, taxa_level = "genus", title = "Genus Abundances")
+
+top_10_genus <- sort(taxa_sums(genus_norm), TRUE)[1:10]
+genus_10 <- prune_taxa(names(top_10_genus), genus_norm)
+
+plot_abundances(genus_10, taxa_level = "genus", title = "Genus Abundances - Top 10")
+```
+
+
+
+```{r}
+plot_richness(class_phy, measures=c("simpson", "shannon"), x="sample") +
+  geom_boxplot(lwd=0.2, aes(fill=sample))
+
+```
+
+
+```{r}
+```
+
+
+```{r}
+```
+
+
+```{r}
+```
+
+
+```{r}
+```
+
+
+```{r}
+```
+
+
+```{r}
+```
+
+
+```{r}
+```
+
+
+```{r}
+```
+
+
+```{r}
+```
+
+
+```{r}
+```
+
+
+```{r}
+```
+
+
+
+
+
+

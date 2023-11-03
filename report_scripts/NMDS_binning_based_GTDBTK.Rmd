@@ -1,0 +1,171 @@
+---
+title: "R Notebook"
+---
+
+```{r}
+library(vegan)
+library(ggplot2)
+
+set.seed(42)
+```
+
+
+```{r}
+info <- c("sample", "sample_ids", "macro_sample", "macro_sample_ids", "macro_sample_location", "coast_deep_shapes")
+```
+
+```{r}
+phylum_features <- c("Acidobacteriota",  "Actinobacteriota",  "Armatimonadota",  "Bacteroidota",  "Bdellovibrionota",  "Chloroflexota",  "Desulfobacterota",  "Gemmatimonadota",  "Myxococcota",  "Nitrospirota",  "Patescibacteria",  "Planctomycetota",  "Proteobacteria",  "Thermoplasmatota",  "Thermoproteota",  "Verrucomicrobiota")
+
+class_features <- c("Acidimicrobiia", "Actinomycetia", "Alphaproteobacteria", "Anaerolineae", "Armatimonadia", "Bacteroidia", "Bdellovibrionia", "Blastocatellia", "Desulfobacteria", "Desulfomonilia", "Gammaproteobacteria", "Gemmatimonadetes", "Gracilibacteria", "Myxococcia", "Nitrososphaeria", "Nitrospiria", "Paceibacteria", "Planctomycetes", "Rhodothermia", "Syntrophia", "Thermodesulfovibrionia", "Thermoleophilia", "Thermoplasmata", "UBA9160", "UBA9217", "Verrucomicrobiae", "Vicinamibacteria" )
+
+order_features <- c("AKYH767.A", "Acidiferrobacterales", "Acidimicrobiales", "Actinomycetales", "Armatimonadales", "BD1.5", "Bacteroidales", "Bdellovibrionales", "Beggiatoales", "Burkholderiales", "Chitinophagales", "Chromatiales", "Cytophagales", "Desulfatiglandales", "Desulfomonilales", "Dongiales", "Fen.336", "Flavobacteriales", "Ga0077560", "Gemmatimonadales", "Methylococcales", "Micropepsales", "Myxococcales", "Nitrososphaerales", "Nitrospirales", "Pirellulales", "Planctomycetales", "Propionibacteriales", "Pyrinomonadales", "RBC074", "RBG.16.68.12", "Rhizobiales", "Rhodothermales", "Sphingomonadales", "Steroidobacterales", "Syntrophales", "Thermodesulfovibrionales", "Thermoflexales", "UBA10834", "UBA9160", "UBA9217", "UBA9983_A", "Verrucomicrobiales", "Vicinamibacterales", "unclassified_")
+
+family_features <- c("X2013.40CM.41.45", "Aestuariivirgaceae", "Armatimonadaceae", "Bdellovibrionaceae", "Beggiatoaceae", "Burkholderiaceae", "Chitinophagaceae", "Chromatiaceae", "Cyclobacteriaceae", "Desulfomonilaceae", "Dongiaceae", "Fen.336", "Flavobacteriaceae", "Ga0077560", "Gemmatimonadaceae", "HGW.15", "Ilumatobacteraceae", "J036", "JACDCH01", "Kineosporiaceae", "Methylomonadaceae", "Micropepsaceae", "Myxococcaceae", "Nitrosopumilaceae", "Nitrospiraceae", "Nocardioidaceae", "OLB10", "PHOS.HE28", "Pirellulaceae", "Planctomycetaceae", "Pyrinomonadaceae", "RBC074", "RBG.16.68.12", "Rhizobiaceae", "Rhodocyclaceae", "Saprospiraceae", "Sphingomonadaceae", "Steroidobacteraceae", "Sulfurifustaceae", "UA16", "UBA10834", "UBA2023", "UBA2999", "UBA4427", "UBA4778", "UBA6898", "UBA6899", "UBA9159", "UBA9217", "UKL13.2", "VadinHA17", "Verrucomicrobiaceae", "WLNW01", "unclassified_")
+
+genus_features <- c("Aestuariivirga",  "Archangium_A",  "Armatimonas",  "Azonexus",  "BJ22",  "CADEED01",  "CADEEN01",  "CADEFD01",  "CAINEC01",  "CAIVPM01",  "CSP1.1",  "DSXZ01",  "ELB16.189",  "Fen.999",  "Ferruginibacter",  "Flavisolibacter",  "Flavobacterium",  "Ga0074139",  "Ga0077541",  "Hydrogenophaga",  "Ideonella_A",  "JAAXXJ01",  "JACMLC01",  "JJ008",  "KS41",  "LD21",  "Lacibacter",  "M3007",  "Nitrospira_F",  "OLB11",  "OLB17",  "PHOS.HE28",  "PNKF01",  "Piscinibacter",  "Prosthecobacter",  "Pseudobdellovibrio",  "R.H.3",  "RBG.16.68.12",  "RPQJ01",  "SCN.70.22",  "SXXK01",  "SZUA.430",  "Segetibacter",  "Sphingorhabdus_B",  "Sulfuricaulis",  "Thioploca",  "UBA1930",  "UBA2192",  "UBA3362",  "UBA3961",  "UBA4660",  "UBA6899",  "UBA6901",  "UBA9653",  "VFJN01",  "WLNW01",  "ZC4RG30",  "unclassified_")
+
+species_features <- c("Nitrospira_F.sp001464735", "Nitrospira_F.sp002083565", "Sphingorhabdus_B.lacus", "UBA3362.sp013140975", "unclassified_")
+
+```
+
+
+
+```{r}
+phylum_df <- read.csv("./binning-based_gtdbtk/phylum.tsv", sep="\t")
+class_df <- read.csv("./binning-based_gtdbtk/class.tsv", sep="\t")
+order_df <- read.csv("./binning-based_gtdbtk/order.tsv", sep="\t")
+family_df <- read.csv("./binning-based_gtdbtk/family.tsv", sep="\t")
+genus_df <- read.csv("./binning-based_gtdbtk/genus.tsv", sep="\t")
+species_df <- read.csv("./binning-based_gtdbtk/species.tsv", sep="\t")
+
+```
+
+
+```{r}
+features_dict <- list("phylum"=phylum_features, "order"=order_features)
+
+prova <- "phylum"
+
+features_dict[[prova]]
+
+
+
+phylum_df[, info]
+```
+
+
+
+```{r}
+plot_NMDS <- function(otu_dataframe, taxa_level, distance_metrics="jaccard"){
+  features_dict <- list(
+    "phylum"=phylum_features, 
+    "class"=class_features,
+    "order"=order_features,
+    "family"=family_features,
+    "genus"=genus_features,
+    "species"=species_features
+  )
+  
+  local_features <- features_dict[[taxa_level]]
+  print(local_features)
+  
+  otu <- otu_dataframe[, local_features]
+  env <- otu_dataframe[, info]
+
+  motu <- as.matrix(otu)
+  
+  nmds = metaMDS(motu, distance = distance_metrics, k=2, trymax = 1000)
+  
+  nmds_coordinates <- as.data.frame(scores(nmds)$sites)
+  nmds_coordinates$samples <- env$macro_sample_location
+  nmds_coordinates$coast_deep_shapes <- env$coast_deep_shapes
+  
+  gg = ggplot(data = nmds_coordinates, aes(x = NMDS1, y = NMDS2)) + 
+     geom_point(data = nmds_coordinates, aes(colour = samples, shape = coast_deep_shapes), size = 3, alpha = 0.5) + 
+     scale_colour_manual(values = c("darkred", "steelblue", "darkgreen")) + 
+     theme(axis.title = element_text(size = 10, face = "bold", colour = "grey30"), 
+           panel.background = element_blank(), panel.border = element_rect(fill = NA, colour = "grey30"), 
+           axis.ticks = element_blank(), axis.text = element_blank(), legend.key = element_blank(), 
+           legend.title = element_text(size = 10, face = "bold", colour = "grey30"), 
+           legend.text = element_text(size = 9, colour = "grey30")) +
+     labs(colour = "Location")
+     
+  gg
+}
+
+
+```
+
+
+```{r}
+# phylum
+
+plot_NMDS(phylum_df, taxa_level = "phylum", distance_metrics = "bray")
+
+```
+
+
+```{r}
+# class
+
+plot_NMDS(class_df, taxa_level = "class", distance_metrics = "bray")
+```
+
+
+```{r}
+# order
+
+plot_NMDS(order_df, taxa_level = "order", distance_metrics = "bray")
+```
+
+
+```{r}
+# family
+
+plot_NMDS(family_df, taxa_level = "family", distance_metrics = "bray")
+```
+
+
+```{r}
+# genus
+
+plot_NMDS(genus_df, taxa_level = "genus", distance_metrics = "bray")
+```
+
+
+```{r}
+```
+
+
+```{r}
+```
+
+
+```{r}
+```
+
+
+```{r}
+```
+
+
+```{r}
+```
+
+
+```{r}
+```
+
+
+```{r}
+```
+
+
+```{r}
+```
+
+
+```{r}
+```
+

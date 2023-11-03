@@ -1,0 +1,99 @@
+---
+title: "R Notebook"
+---
+
+
+```{r}
+library(vegan)
+library(ggplot2)
+```
+
+```{r}
+source(file = "./features_hmms_AMRFinderPlus.r")
+
+info <- c("name", "sample", "sample_ids", "macro_sample", "macro_sample_ids", "macro_sample_location", "coast_deep_shapes")
+
+```
+
+
+
+```{r}
+df <- read.csv("./hmms_AMRFinderPlus_hit_metaspades_table.tsv", sep = "\t")
+df
+
+```
+
+
+
+
+```{r}
+otu <- df[, features]
+otu
+```
+
+```{r}
+env <- df [, info]
+env
+```
+
+
+
+```{r}
+motu <- as.matrix(otu)
+```
+
+
+
+```{r}
+# en = envfit(nmds, env, permutations = 999, na.rm = TRUE)
+# en
+```
+
+
+```{r}
+
+#nmds code
+set.seed(42)
+nmds = metaMDS(motu, distance = "jaccard", k=2, trymax = 1000)
+nmds
+```
+
+```{r}
+#extract NMDS scores (x and y coordinates)
+nmds_coordinates <- as.data.frame(scores(nmds)$sites)
+nmds_coordinates$samples <- env$macro_sample_location
+nmds_coordinates$coast_deep_shapes <- env$coast_deep_shapes
+nmds_coordinates
+```
+
+
+
+```{r}
+gg = ggplot(data = nmds_coordinates, aes(x = NMDS1, y = NMDS2)) + 
+     geom_point(data = nmds_coordinates, aes(colour = samples, shape = coast_deep_shapes), size = 3, alpha = 0.5) + 
+     scale_colour_manual(values = c("darkred", "steelblue", "darkgreen")) + 
+     theme(axis.title = element_text(size = 10, face = "bold", colour = "grey30"), 
+           panel.background = element_blank(), panel.border = element_rect(fill = NA, colour = "grey30"), 
+           axis.ticks = element_blank(), axis.text = element_blank(), legend.key = element_blank(), 
+           legend.title = element_text(size = 10, face = "bold", colour = "grey30"), 
+           legend.text = element_text(size = 9, colour = "grey30")) +
+     labs(colour = "Location")
+     
+gg
+```
+
+
+
+```{r}
+```
+
+
+```{r}
+```
+
+
+```{r}
+```
+
+
+

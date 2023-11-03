@@ -1,0 +1,159 @@
+---
+title: "R Notebook"
+---
+
+
+```{r}
+library(vegan)
+library(ggplot2)
+```
+
+```{r}
+argclass_features <- c("bacitracin", "aminoglycoside", "multidrug", "fosmidomycin", "peptide", "beta.lactam", "rifamycin")
+arg_features <- c("AAC.6...II", "BPEF", "BACA", "RPOB2", "OMPR", "ROSA", "LRA", "UGD", "ADP.RIBOSYLATING_TRANSFERASE_ARR", "KDPE")
+besthit_features <- c("YP_001563294.FEATURES.bacA.bacitracin.bacA", "YP_002552549.FEATURES.bacA.bacitracin.bacA", "BAD59497.1.FEATURES.rpoB2.multidrug.rpoB2", "YP_985461.FEATURES.bacA.bacitracin.bacA", "YP_316450.FEATURES.bacA.bacitracin.bacA", "AF001493.1.orf0.gene.p01.FEATURES.ADP.ribosylating_transferase_arr.rifamycin.ADP.ribosylating_transferase_arr", "ABM94007.FEATURES.bacA.bacitracin.bacA", "NP_415222.1.FEATURES.kdpE.aminoglycoside.kdpE", "EU408351.1.gene26.p01.FEATURES.LRA.12.beta.lactam.LRA", "YP_970399.FEATURES.bacA.bacitracin.bacA", "ZP_03552050.FEATURES.bacA.bacitracin.bacA", "gi.909830386.gb.AKU13184.1..FEATURES.ompR.multidrug.ompR", "M29695.1.gene2.p01.FEATURES.aac.6...II.aminoglycoside.aac.6...II", "AAC75089.1.FEATURES.ugd.peptide.ugd", "ZP_02357857.FEATURES.bpeF.multidrug.bpeF", "YP_002890644.FEATURES.bacA.bacitracin.bacA", "AL939114.1.orf1.gene.p01.FEATURES.ADP.ribosylating_transferase_arr.rifamycin.ADP.ribosylating_transferase_arr", "YP_981592.FEATURES.bacA.bacitracin.bacA", "YP_001401993.FEATURES.rosA.fosmidomycin.rosA", "L06163.1.gene1.p01.FEATURES.aac.6...II.aminoglycoside.aac.6...II", "EF614235.1.gene3.p01.FEATURES.aac.6...II.aminoglycoside.aac.6...II", "ZP_02465589.FEATURES.bpeF.multidrug.bpeF")
+
+info <- c("sample", "sample_ids", "macro_sample", "macro_sample_ids", "macro_sample_location", "coast_deep_shapes")
+
+```
+
+
+
+```{r}
+df_arg <- read.csv("./deeparg_arg_table.tsv", sep = "\t")
+df_argclass <- read.csv("./deeparg_argclass_table.tsv", sep = "\t")
+df_besthit <- read.csv("./deeparg_besthit_table.tsv", sep = "\t")
+
+```
+
+```{r}
+print(dim(df_arg))
+print(dim(df_argclass))
+print(dim(df_besthit))
+```
+
+
+
+```{r}
+otu_arg <- df_arg[, arg_features]
+otu_argclass <- df_argclass[, argclass_features]
+otu_besthit <- df_besthit[, besthit_features]
+
+
+```
+
+```{r}
+env_arg <- df_arg[, info]
+env_argclass <- df_argclass[, info]
+env_besthit <- df_besthit[, info]
+```
+
+
+
+```{r}
+motu_arg <- as.matrix(otu_arg)
+motu_argclass <- as.matrix(otu_argclass)
+motu_besthit <- as.matrix(otu_besthit)
+```
+
+```{r}
+# en = envfit(nmds, env, permutations = 999, na.rm = TRUE)
+# en
+```
+
+
+```{r}
+
+# NMDS
+set.seed(42)
+
+dist_metrics <- "manhattan"
+
+nmds_arg = metaMDS(motu_arg, distance = dist_metrics, k=2, trymax = 1000)
+nmds_argclass = metaMDS(motu_argclass, distance = dist_metrics, k=2, trymax = 1000)
+nmds_besthit = metaMDS(motu_besthit, distance = dist_metrics, k=2, trymax = 1000)
+
+```
+
+```{r}
+#extract NMDS scores (x and y coordinates)
+nmds_coords_arg <- as.data.frame(scores(nmds_arg)$sites)
+nmds_coords_arg$samples <- env_arg$macro_sample_location
+nmds_coords_arg$coast_deep_shapes <- env_arg$coast_deep_shapes
+nmds_coords_arg
+```
+
+
+
+```{r}
+gg = ggplot(data = nmds_coords_arg, aes(x = NMDS1, y = NMDS2)) + 
+     geom_point(data = nmds_coords_arg, aes(colour = samples, shape = coast_deep_shapes), size = 3, alpha = 0.5) + 
+     scale_colour_manual(values = c("darkorange", "steelblue", "darkgreen")) + 
+     theme(axis.title = element_text(size = 10, face = "bold", colour = "grey30"), 
+           panel.background = element_blank(), panel.border = element_rect(fill = NA, colour = "grey30"), 
+           axis.ticks = element_blank(), axis.text = element_blank(), legend.key = element_blank(), 
+           legend.title = element_text(size = 10, face = "bold", colour = "grey30"), 
+           legend.text = element_text(size = 9, colour = "grey30")) +
+     labs(colour = "Location") +
+     ggtitle(paste0("NMDS - Arg - Stress: ", nmds_arg$stress))
+     
+gg
+```
+
+
+
+```{r}
+#extract NMDS scores (x and y coordinates)
+nmds_coords_argclass <- as.data.frame(scores(nmds_argclass)$sites)
+nmds_coords_argclass$samples <- env_argclass$macro_sample_location
+nmds_coords_argclass$coast_deep_shapes <- env_argclass$coast_deep_shapes
+nmds_coords_argclass
+```
+
+
+```{r}
+gg = ggplot(data = nmds_coords_argclass, aes(x = NMDS1, y = NMDS2)) + 
+     geom_point(data = nmds_coords_argclass, aes(colour = samples, shape = coast_deep_shapes), size = 3, alpha = 0.5) + 
+     scale_colour_manual(values = c("darkorange", "steelblue", "darkgreen")) + 
+     theme(axis.title = element_text(size = 10, face = "bold", colour = "grey30"), 
+           panel.background = element_blank(), panel.border = element_rect(fill = NA, colour = "grey30"), 
+           axis.ticks = element_blank(), axis.text = element_blank(), legend.key = element_blank(), 
+           legend.title = element_text(size = 10, face = "bold", colour = "grey30"), 
+           legend.text = element_text(size = 9, colour = "grey30")) +
+     labs(colour = "Location") +
+     ggtitle(paste0("NMDS - Arg Class - Stress: ", nmds_argclass$stress))
+     
+gg
+```
+
+
+```{r}
+#extract NMDS scores (x and y coordinates)
+nmds_coords_besthit <- as.data.frame(scores(nmds_besthit)$sites)
+nmds_coords_besthit$samples <- env_besthit$macro_sample_location
+nmds_coords_besthit$coast_deep_shapes <- env_besthit$coast_deep_shapes
+nmds_coords_besthit
+```
+
+
+```{r}
+gg = ggplot(data = nmds_coords_besthit, aes(x = NMDS1, y = NMDS2)) + 
+     geom_point(data = nmds_coords_besthit, aes(colour = samples, shape = coast_deep_shapes), size = 3, alpha = 0.5) + 
+     scale_colour_manual(values = c("darkorange", "steelblue", "darkgreen")) + 
+     theme(axis.title = element_text(size = 10, face = "bold", colour = "grey30"), 
+           panel.background = element_blank(), panel.border = element_rect(fill = NA, colour = "grey30"), 
+           axis.ticks = element_blank(), axis.text = element_blank(), legend.key = element_blank(), 
+           legend.title = element_text(size = 10, face = "bold", colour = "grey30"), 
+           legend.text = element_text(size = 9, colour = "grey30")) +
+     labs(colour = "Location") +
+     ggtitle(paste0("NMDS - Arg Class - Stress: ", nmds_besthit$stress))
+     
+gg
+```
+
+
+```{r}
+```
+
+
+

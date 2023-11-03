@@ -1,0 +1,98 @@
+---
+title: "R Notebook"
+---
+
+
+```{r}
+library(vegan)
+library(ggplot2)
+```
+
+```{r}
+features <- c("vanH", "APH3", "tet_MFS_efflux", "SPM", "RND_efflux", "MarR", "Acetyltransf_9", "SME", "SHV.LEN", "vanC", "vanZ", "APH3.", "MexX", "ArmA_Rmt", "SubclassB3", "emrB", "Aminoglyc_resit", "norA", "Aminotran_4", "FmrO", "adeR", "adeS", "Dihydropteroate", "CepA", "tet_ribosomoal_protect", "D_ala_D_ala", "HTH_AraC", "ErmC", "vanS", "Aminotran_1_2", "MATE_efflux", "Antibiotic_NAT", "KHM", "ANT9", "baeR", "MFS_efflux", "AAC6.Ib", "Acetyltransf_1", "blaI", "KPC", "CMY.LAT.MOX.ACT.MIR.FOX", "Whib", "Exo", "ABC_tran", "DIM.GIM.SIM", "MexE", "macrolide_glycosyl", "Acetyltransf_8", "mprF", "AAC6.II", "MarR_2", "VEB.PER", "romA", "emrE", "mecR1", "Small_Multi_Drug_Res", "ramA", "ABC1", "MFS_3", "ErmA", "ACR_tran", "TE_Inactivator", "DHFR_1", "LRA", "Beta.lactamase", "ANT6", "Usp", "baeS", "Erm38", "vanW", "APH", "ClassD", "MFS_1", "TetM.TetW.TetO.TetS", "Lactamase_B_2", "ClassB", "VIM", "Acetyltransf_7", "MoxA", "ABC_efflux", "APH6", "TetA", "CTXM", "efflux_Bcr_CflA", "vanT", "APH3..", "MexW.MexI", "BCII", "TetE", "SubclassB2", "tolC", "MexC", "robA", "vanY", "vanX", "macA", "SubclassB1", "phoQ", "L1", "PC1", "drrA", "blaR1", "Thymidylat_synt", "ANT4", "CblA", "TetH.TetJ", "BlaB", "Chlor_Efflux_Pump", "GES", "AAC6.I", "Transpeptidase", "Qnr", "MexH", "AAC3.I", "macB", "Sfh", "ANT", "Glyoxalase", "Cfr23_rRNA_methyltrans", "efflux_EmrB", "NDM.CcrA", "Erm23S_rRNA_methyltrans", "RND_mfp", "Acetyltransf_3", "vanA", "vanR", "ANT2", "BJP", "Chlor_Acetyltrans_CAT", "CfxA", "adeC.adeK.oprM", "ErmB", "TetX", "AAC3", "thym_sym", "TEM", "TetA.B", "MexA", "msbA", "ClassC.AmpC", "Lactamase_B", "TetA.G", "Beta.lactamase2", "GOB", "Acetyltransf_4", "adeA.adeI", "Dala_Dala_lig_C", "TetD", "ANT3", "marA", "Dala_Dala_lig_N", "vanB", "Acyltransferase", "soxR", "Fluor_Res_DNA_Topo", "IMP", "CAT", "vanD", "CPT", "IND", "Methyltransf_18", "adeB", "Chlor_Phospho_CPT", "ABC2_membrane", "TetY", "X16S_rRNA_methyltrans", "ClassA", "DHA", "CARB.PSE")
+
+info <- c("name", "sample", "sample_ids", "macro_sample", "macro_sample_ids", "macro_sample_location", "coast_deep_shapes")
+
+```
+
+
+
+```{r}
+df <- read.csv("./hmms_hit_metaspades_table.tsv", sep = "\t")
+df
+
+```
+
+
+```{r}
+otu <- df[, features]
+otu
+```
+
+```{r}
+env <- df [, info]
+env
+```
+
+
+
+```{r}
+motu <- as.matrix(otu)
+motu
+```
+
+
+
+```{r}
+# en = envfit(nmds, env, permutations = 999, na.rm = TRUE)
+# en
+```
+
+
+```{r}
+
+#nmds code
+set.seed(42)
+nmds = metaMDS(motu, distance = "bray", k=2, trymax = 1000)
+nmds
+```
+
+```{r}
+#extract NMDS scores (x and y coordinates)
+nmds_coordinates <- as.data.frame(scores(nmds)$sites)
+nmds_coordinates$samples <- env$macro_sample
+nmds_coordinates$coast_deep_shapes <- env$coast_deep_shapes
+nmds_coordinates
+```
+
+
+
+```{r}
+gg = ggplot(data = nmds_coordinates, aes(x = NMDS1, y = NMDS2)) + 
+     geom_point(data = nmds_coordinates, aes(colour = samples, shape = coast_deep_shapes), size = 3, alpha = 0.5) + 
+     scale_colour_manual(values = c("darkred", "steelblue", "darkgreen")) + 
+     theme(axis.title = element_text(size = 10, face = "bold", colour = "grey30"), 
+           panel.background = element_blank(), panel.border = element_rect(fill = NA, colour = "grey30"), 
+           axis.ticks = element_blank(), axis.text = element_blank(), legend.key = element_blank(), 
+           legend.title = element_text(size = 10, face = "bold", colour = "grey30"), 
+           legend.text = element_text(size = 9, colour = "grey30")) +
+     labs(colour = "Season")
+     
+gg
+```
+
+
+
+```{r}
+```
+
+
+```{r}
+```
+
+
+```{r}
+```
+
+
+
