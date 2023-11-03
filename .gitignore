@@ -1,5 +1,7 @@
-/results
+/results*
 /delivery*
+/databases
+/.vscode
 /.snakemake
 /.nextflow
 /.ipynb*
@@ -15,3 +17,8 @@
 /hmms_*
 .DS_Store
 /plots
+/old*
+/HMMS_AMRFinderPlus
+/**/.ipynb_checkpoints
+Resfams-full.hmm.gz
+*.simg
