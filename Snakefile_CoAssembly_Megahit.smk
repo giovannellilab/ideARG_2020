@@ -14,9 +14,9 @@ rule all:
         # expand("{wdir}/{sample}/amr_finderplus", wdir=config["WDIR"], sample=config["SAMPLES"]),
         expand("{wdir}/{sample}/prodigal", sample=config["SAMPLES"], wdir=config["WDIR"]),
         # expand("{wdir}/deepArg_db", wdir=config["WDIR"]),
-        # expand("{wdir}/{sample}/deeparg", sample=config["SAMPLES"], wdir=config["WDIR"]),
-        # expand("{wdir}/{sample}/abricate", sample=config["SAMPLES"], wdir=config["WDIR"]),
-        # expand("{wdir}/abricate_summary", wdir=config["WDIR"]),
+        expand("{wdir}/{sample}/deeparg", sample=config["SAMPLES"], wdir=config["WDIR"]),
+        expand("{wdir}/{sample}/abricate", sample=config["SAMPLES"], wdir=config["WDIR"]),
+        expand("{wdir}/abricate_summary", wdir=config["WDIR"]),
         expand("{wdir}/{sample}/hmms_presence_AMRFinderPlus", sample=config["SAMPLES"], wdir=config["WDIR"]),
         expand("{wdir}/{sample}/hmms_presence", sample=config["SAMPLES"], wdir=config["WDIR"]),
 
@@ -220,21 +220,23 @@ rule run_prodigal:
         parsing_prodigal_orfs(fasta_input, output_mapping, output_fasta, output_simple_mapping)
 
 
-rule deepArg_DB:
-    output:
-        folder=directory("{wdir}/deepArg_db")
-    run:
-        shell("mkdir -p {output.folder}")
-        shell("docker run -it --rm -v {output.folder}:/deepargDB/ gaarangoa/deeparg:latest deeparg download_data -o /deepargDB")
+# rule deepArg_DB:
+#     output:
+#         folder=directory("{wdir}/deepArg_db")
+#     params:
+#         simg="{wdir}/../deeparg.simg"
+#     run:
+#         shell("mkdir -p {output.folder}")
+#         shell("singularity exec --bind {output.folder}:/deepargDB/ {params.simg} deeparg download_data -o /deepargDB")
 
 
 rule deepArg:
     input:
         prodigal_path="{wdir}/{sample}/prodigal",
-        deeparg_db="{wdir}/deepArg_db",
+        deeparg_db="/mnt/data/bigdata/ideARG_2020/results_metaspades/deepArg_db",
     output:
         folder=directory("{wdir}/{sample}/deeparg")
-    threads: 15
+    threads: 30
     params:
         simg="{wdir}/../deeparg.simg",
         sample_output="{sample}_output"
