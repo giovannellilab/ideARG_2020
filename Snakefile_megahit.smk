@@ -138,6 +138,7 @@ rule all:
 #             -o {log}")
 
 
+## GeoMosaic conda environment
 rule run_prodigal:
     input:
         contig_path="{wdir}/{sample}/megahit",
